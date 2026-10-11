@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -21,18 +22,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import au.edu.jcu.assessment.utilityapp.screen.SettingsScreen
-import au.edu.jcu.assessment.utilityapp.screen.UtilityScreen
-import au.edu.jcu.assessment.utilityapp.ui.theme.MobileTech_UtilityAppTheme
+//import au.edu.jcu.assessment.utilityapp.screen.SettingsScreen
+//import au.edu.jcu.assessment.utilityapp.screen.UtilityScreen
+//import au.edu.jcu.assessment.utilityapp.ui.theme.MobileTech_UtilityAppTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MobileTech_UtilityAppTheme {
-                UtilityApp()
-            }
+//            MobileTech_UtilityAppTheme {
+//                UtilityApp()
+//            }
         }
     }
 }
