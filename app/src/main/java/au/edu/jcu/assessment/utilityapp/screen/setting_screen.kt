@@ -24,8 +24,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import au.edu.jcu.assessment.utilityapp.model.AppSettings
-import au.edu.jcu.assessment.utilityapp.model.DistanceUnit
-import au.edu.jcu.assessment.utilityapp.model.SortOption
 import au.edu.jcu.assessment.utilityapp.ui.theme.MobileTech_UtilityAppTheme
 import au.edu.jcu.assessment.utilityapp.viewmodel.SettingsViewModel
 
@@ -39,8 +37,6 @@ fun SettingsScreen() {
         settings = settings,
         onRadius = vm::setRadius,
         onOpenNowOnly = vm::setOpenNowOnly,
-        onSortBy = vm::setSortBy,
-        onUnit = vm::setUnit,
         onReset = vm::resetToDefaults
     )
 }
@@ -51,8 +47,6 @@ fun SettingsContent(
     settings: AppSettings,
     onRadius: (Int) -> Unit,
     onOpenNowOnly: (Boolean) -> Unit,
-    onSortBy: (SortOption) -> Unit,
-    onUnit: (DistanceUnit) -> Unit,
     onReset: () -> Unit
 ) {
     Column(
@@ -81,15 +75,6 @@ fun SettingsContent(
         }
         HorizontalDivider()
 
-        Section("Sort shops by", null) {
-            ChipRow(SortOption.entries, settings.sortBy, { it.label }, onSortBy)
-        }
-        HorizontalDivider()
-
-        Section("Distance units", null) {
-            ChipRow(DistanceUnit.entries, settings.unit, { it.label }, onUnit)
-        }
-        HorizontalDivider()
 
         OutlinedButton(onClick = onReset, modifier = Modifier.fillMaxWidth()) {
             Text("Reset to defaults")
@@ -112,7 +97,7 @@ private fun Section(title: String, hint: String?, content: @Composable () -> Uni
     }
 }
 
-// A row of chips where exactly one is selected (reused by every section).
+// A row of chips where exactly one is selected.
 @Composable
 private fun <T> ChipRow(options: List<T>, selected: T, label: (T) -> String, onSelect: (T) -> Unit) {
     Row(
@@ -133,6 +118,6 @@ private fun <T> ChipRow(options: List<T>, selected: T, label: (T) -> String, onS
 @Composable
 fun SettingsPreview() {
     MobileTech_UtilityAppTheme {
-        SettingsContent(AppSettings(), {}, {}, {}, {}, {})
+        SettingsContent(AppSettings(), {}, {}, {})
     }
 }
