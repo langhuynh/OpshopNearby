@@ -14,9 +14,7 @@ package au.edu.jcu.assessment.utilityapp.api
 //   }
 //
 // Gson copies it into the classes below. The names must match the JSON names exactly.
-// Everything has "?" (can be null) because some shops are missing details.
 
-// The whole answer: a list of shops.
 data class OverpassResponse(
     val elements: List<OverpassElement>?
 )
