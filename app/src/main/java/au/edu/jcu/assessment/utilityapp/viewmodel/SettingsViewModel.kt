@@ -4,8 +4,6 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import au.edu.jcu.assessment.utilityapp.data.SettingsStore
 import au.edu.jcu.assessment.utilityapp.model.AppSettings
-import au.edu.jcu.assessment.utilityapp.model.DistanceUnit
-import au.edu.jcu.assessment.utilityapp.model.SortOption
 import kotlinx.coroutines.flow.StateFlow
 
 // ViewModel for the Settings screen. Changes are saved straight away and shared with the Utility screen.
@@ -18,7 +16,5 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     fun setRadius(km: Int) = store.update { it.copy(radiusKm = km) }
     fun setOpenNowOnly(on: Boolean) = store.update { it.copy(openNowOnly = on) }
-    fun setSortBy(option: SortOption) = store.update { it.copy(sortBy = option) }
-    fun setUnit(unit: DistanceUnit) = store.update { it.copy(unit = unit) }
     fun resetToDefaults() = store.update { AppSettings() }
 }
