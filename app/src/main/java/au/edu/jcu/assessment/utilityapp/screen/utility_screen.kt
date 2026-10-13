@@ -22,7 +22,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -33,7 +32,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import au.edu.jcu.assessment.utilityapp.model.AppSettings
 import au.edu.jcu.assessment.utilityapp.model.Distance
 import au.edu.jcu.assessment.utilityapp.model.OpenStatus
 import au.edu.jcu.assessment.utilityapp.model.OpeningHours
@@ -43,15 +41,9 @@ import au.edu.jcu.assessment.utilityapp.ui.theme.MobileTech_UtilityAppTheme
 import au.edu.jcu.assessment.utilityapp.viewmodel.SettingsViewModel
 import au.edu.jcu.assessment.utilityapp.viewmodel.ShopUiState
 import au.edu.jcu.assessment.utilityapp.viewmodel.ShopViewModel
-
-// =====================================================================================
-// THE UTILITY TAB: op shops near the user as a list.
-// That keeps the shops visible when the phone is turned sideways and the screen is short.
-// =====================================================================================
+// THE UTILITY TAB: op shops near the user as a list
 @Composable
 fun UtilityScreen(onAskPermission: () -> Unit) {
-    // viewModel() gives the same ViewModel to every tab, so the list and the map always match.
-    val shopVm: ShopViewModel = viewModel()
     val view = shopResultView(onAskPermission)
 
     LazyColumn(
@@ -64,15 +56,10 @@ fun UtilityScreen(onAskPermission: () -> Unit) {
                 ShopsHeader(title = "Thrift Finder")
             }
         }
-
         when (view) {
             is ResultView.Shops -> {
                 item {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("${view.shown.size} shops found", style = MaterialTheme.typography.labelLarge)
-                        Spacer(Modifier.weight(1f))
-                        TextButton(onClick = { shopVm.refresh() }) { Text("Refresh") }
-                    }
+                    Text("${view.shown.size} shops found", style = MaterialTheme.typography.labelLarge)
                 }
                 items(view.shown, key = { it.id }) { shop ->
                     ShopCard(shop, OpeningHours.statusNow(shop.openingHours))
@@ -84,28 +71,17 @@ fun UtilityScreen(onAskPermission: () -> Unit) {
     }
 }
 
-
-// =====================================================================================
-// THE PIECES the screen is built from (the Map tab can use them too: same package)
-// =====================================================================================
-// The top of the Utility and Map screens: title, the user's location, and the settings line.
+// The top of the Utility and Map screens: the title and the user's location.
 @Composable
 fun ShopsHeader(title: String) {
     val shopVm: ShopViewModel = viewModel()
-    val settingsVm: SettingsViewModel = viewModel()
     val label by shopVm.locationLabel.collectAsState()
-    val settings by settingsVm.settings.collectAsState()
 
     Text(title, style = MaterialTheme.typography.headlineMedium)
     LocationBar(label)
-    Text(
-        settingsSummary(settings),
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
-    )
 }
 
-// Shows the suburb the app found shops around. (Tap Refresh to get the location again.)
+// Shows the suburb the app found shops around.
 @Composable
 fun LocationBar(label: String?) {
     Card(
@@ -192,10 +168,6 @@ fun OsmCredit() {
     Text("Data © OpenStreetMap contributors", style = MaterialTheme.typography.bodySmall)
 }
 
-// One line that sums up the Settings, e.g. "Within 5 km · Closest first · Open now only".
-fun settingsSummary(s: AppSettings): String =
-    "Within ${s.radiusKm} km · Closest first" + if (s.openNowOnly) " · Open now only" else ""
-
 @Composable
 fun ShopCard(shop: Shop, status: OpenStatus) {
     Card(Modifier.fillMaxWidth()) {
@@ -247,10 +219,7 @@ fun MessageBox(text: String, button: String? = null, onClick: () -> Unit = {}) {
         }
     }
 }
-
-// =====================================================================================
 // PREVIEWS (Android Studio only: click "Split" at the top right to see them)
-// =====================================================================================
 
 @Preview(showBackground = true)
 @Composable
