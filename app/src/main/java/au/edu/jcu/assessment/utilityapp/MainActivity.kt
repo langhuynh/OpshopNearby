@@ -1,5 +1,6 @@
 package au.edu.jcu.assessment.utilityapp
 
+//import au.edu.jcu.assessment.utilityapp.screen.MapScreen
 import android.Manifest
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -29,7 +30,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import au.edu.jcu.assessment.utilityapp.screen.MapScreen
-//import au.edu.jcu.assessment.utilityapp.screen.MapScreen
 import au.edu.jcu.assessment.utilityapp.screen.SettingsScreen
 import au.edu.jcu.assessment.utilityapp.screen.UtilityScreen
 import au.edu.jcu.assessment.utilityapp.ui.theme.MobileTech_UtilityAppTheme
@@ -71,11 +71,9 @@ fun UtilityAppPreview() {
 fun UtilityApp() {
     // rememberSaveable (instead of remember) keeps the chosen tab when the phone is rotated.
     var selectedTab by rememberSaveable { mutableStateOf("Utility") }
-
     // The shop ViewModel: shared by all the tabs, so they show the same shops.
     val shopVm: ShopViewModel = viewModel()
     val state by shopVm.state.collectAsState()
-
     // Android's "Allow location?" popup, used by the Utility and Map tabs.
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -86,7 +84,6 @@ fun UtilityApp() {
             arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
         )
     }
-
     // Ask once, when the app first opens.
     var askedOnce by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -95,7 +92,6 @@ fun UtilityApp() {
             askPermission()
         }
     }
-
     Scaffold(
         bottomBar = {
             NavigationBar {

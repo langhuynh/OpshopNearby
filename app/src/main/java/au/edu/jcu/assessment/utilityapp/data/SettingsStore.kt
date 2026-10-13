@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.StateFlow
 class SettingsStore private constructor(context: Context) {
 
     private val prefs = context.getSharedPreferences("op_shop_settings", Context.MODE_PRIVATE)
-
     private val _settings = MutableStateFlow(load())
     val settings: StateFlow<AppSettings> = _settings
 
@@ -22,12 +21,10 @@ class SettingsStore private constructor(context: Context) {
             .apply()   // saves in the background
         _settings.value = newSettings
     }
-
     private fun load(): AppSettings = AppSettings.fromStored(
         radiusKm = prefs.getInt(KEY_RADIUS, AppSettings.DEFAULT_RADIUS_KM),
         openNowOnly = prefs.getBoolean(KEY_OPEN_NOW, false)
     )
-
     companion object {
         private const val KEY_RADIUS = "radius_km"
         private const val KEY_OPEN_NOW = "open_now_only"

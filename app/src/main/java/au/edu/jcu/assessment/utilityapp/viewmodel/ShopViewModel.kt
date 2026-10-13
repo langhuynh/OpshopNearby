@@ -15,7 +15,6 @@ import au.edu.jcu.assessment.utilityapp.api.OverpassResponse
 import au.edu.jcu.assessment.utilityapp.api.RetrofitInstance
 import au.edu.jcu.assessment.utilityapp.data.SettingsStore
 import au.edu.jcu.assessment.utilityapp.model.PlaceName
-//import au.edu.jcu.assessment.utilityapp.model.PlaceName
 import au.edu.jcu.assessment.utilityapp.model.Shop
 import au.edu.jcu.assessment.utilityapp.model.ShopMapper
 import com.google.android.gms.location.LocationServices
@@ -54,19 +53,14 @@ class ShopViewModel(application: Application) : AndroidViewModel(application) {
 
     private val settingsStore = SettingsStore.get(application)
     private val locationClient = LocationServices.getFusedLocationProviderClient(application)
-
     // MutableStateFlow: a value the screens watch. When it changes, they redraw.
     val state = MutableStateFlow<ShopUiState>(ShopUiState.NeedPermission)
-
     val userLocation = MutableStateFlow<Pair<Double, Double>?>(null)
-
-    // The place name shown at the top of the screens, e.g. "Kirwan, QLD".
+    // The place name shown at the top of the screens, e.g. "Brisbane, QLD".
     val locationLabel = MutableStateFlow<String?>(null)
-
     // The search that is running now. A new search cancels it, so old answers can't pile up
     // or arrive late and replace the newer results.
     private var searchJob: Job? = null
-
     // The last search that worked, so a SMALLER distance can be shown straight away
     // by filtering these shops, without asking the server again.
     private var lastShops: List<Shop> = emptyList()

@@ -9,7 +9,6 @@ import au.edu.jcu.assessment.utilityapp.api.OverpassResponse
 //  - address parts are joined into one line
 //  - each shop gets its distance from the user, then the list is sorted closest first
 object ShopMapper {
-
     fun toShops(response: OverpassResponse, userLat: Double, userLon: Double): List<Shop> =
         response.elements.orEmpty()
             .mapNotNull { toShop(it) }
@@ -34,7 +33,6 @@ object ShopMapper {
             phone = tags.text("phone") ?: tags.text("contact:phone")
         )
     }
-
     //  from the separate addr:* tags. null if nothing useful.
     private fun address(tags: Map<String, String>): String? {
         val street = listOfNotNull(tags.text("addr:housenumber"), tags.text("addr:street"))
@@ -43,7 +41,6 @@ object ShopMapper {
         val area = tags.text("addr:suburb") ?: tags.text("addr:city")
         return listOfNotNull(street, area).joinToString(", ").ifBlank { null }
     }
-
     // A tag's value, or null when it's missing or empty.
     private fun Map<String, String>.text(key: String): String? = this[key]?.trim()?.ifEmpty { null }
 }
