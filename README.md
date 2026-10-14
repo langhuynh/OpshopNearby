@@ -57,4 +57,4 @@ It finds **op shops (charity and second-hand shops) near you**, shows how far aw
 ---
 
 ## 📚 License  
-Shop and map data © OpenStreetMap contributors (ODbL).
+Shop and map data © OpenStreetMap contributors.
