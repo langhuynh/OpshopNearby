@@ -38,6 +38,8 @@ It finds **op shops (charity and second-hand shops) near you**, shows how far aw
 ---
 
 ## Project Structure
+
+```
 app/src/main/java/au/edu/jcu/assessment/utilityapp/
 ├── MainActivity.kt            App start, location permission, bottom tabs
 ├── api/
@@ -47,7 +49,7 @@ app/src/main/java/au/edu/jcu/assessment/utilityapp/
 │   └── SettingsStore.kt       Saves settings (SharedPreferences)
 ├── model/
 │   ├── AppSettings.kt         The 2 settings and their defaults
-│   ├── Distance.kt            Distance between shop and your place
+│   ├── Distance.kt            Haversine distance + "1.5 km away" text
 │   ├── OpeningHours.kt        Open now / Closed now / Hours unknown
 │   ├── PlaceName.kt           "Brisbane City, QLD"
 │   ├── Shop.kt                One op shop
@@ -61,6 +63,7 @@ app/src/main/java/au/edu/jcu/assessment/utilityapp/
 └── viewmodel/
     ├── ShopViewModel.kt       Location, API request, screen state
     └── SettingsViewModel.kt   Settings screen logic
+```
 
 ## Key Concepts Covered
 
