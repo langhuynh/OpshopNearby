@@ -37,6 +37,34 @@ It finds **op shops (charity and second-hand shops) near you**, shows how far aw
 
 ---
 
+## Project Structure
+
+```
+app/src/main/java/au/edu/jcu/assessment/utilityapp/
+├── MainActivity.kt            App start, location permission, bottom tabs
+├── api/
+│   ├── OverpassApi.kt         Retrofit interface, the Overpass question, the servers
+│   └── OverpassModels.kt      Shape of the JSON answer
+├── data/
+│   └── SettingsStore.kt       Saves settings (SharedPreferences)
+├── model/
+│   ├── AppSettings.kt         The 2 settings and their defaults
+│   ├── Distance.kt            Distance between your place and shops
+│   ├── OpeningHours.kt        Open now / Closed now / Hours unknown
+│   ├── PlaceName.kt           "Brisbane City, QLD"
+│   ├── Shop.kt                One op shop
+│   ├── ShopFilter.kt          "Open now only" filter
+│   └── ShopMapper.kt          API answer → list of Shop
+├── screen/
+│   ├── utility_screen.kt      Utility tab (list) + shared pieces (header, cards, messages)
+│   ├── Map_screen.kt          Map tab (osmdroid)
+│   └── setting_screen.kt      Settings tab
+├── ui/theme/                  Colours and fonts (template)
+└── viewmodel/
+    ├── ShopViewModel.kt       Location, API request, screen state
+    └── SettingsViewModel.kt   Settings screen logic
+```
+
 ## Key Concepts Covered
 
 | Week | Concept                        | Used In                          |
@@ -47,7 +75,6 @@ It finds **op shops (charity and second-hand shops) near you**, shows how far aw
 | 4    | ViewModel                      | ShopViewModel, SettingsViewModel |
 | 5    | Retrofit                       | OverpassApi (OpenStreetMap Overpass API) |
 
----
 
 ## Suggested Extensions
 - Tap a shop to see its address, phone and website  
@@ -58,3 +85,4 @@ It finds **op shops (charity and second-hand shops) near you**, shows how far aw
 
 ## 📚 License  
 Shop and map data © OpenStreetMap contributors.
+
