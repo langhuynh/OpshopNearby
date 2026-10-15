@@ -29,6 +29,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import au.edu.jcu.assessment.utilityapp.R
 import au.edu.jcu.assessment.utilityapp.model.OpeningHours
 import au.edu.jcu.assessment.utilityapp.model.Shop
 import au.edu.jcu.assessment.utilityapp.viewmodel.ShopViewModel
@@ -37,9 +38,10 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 
+// =====================================================================================
 // THE MAP TAB: the same shops as the Utility tab, as pins on an OpenStreetMap map.
 // It uses the shared pieces in utility_screen.kt (ShopsHeader, shopResultView, OsmCredit...).
-
+// =====================================================================================
 // The Map tab: the same shops as the Utility tab, as pins on an OpenStreetMap map.
 // Upright: header on top, map below. Sideways: header on the left (scrollable), map on the right,
 // so the map always gets enough space.
@@ -105,7 +107,10 @@ private fun MapArea(view: ResultView, modifier: Modifier) {
     }
 }
 
+
+// =====================================================================================
 // THE MAP ITSELF (osmdroid, free OpenStreetMap tiles, no API key)
+// =====================================================================================
 // A free OpenStreetMap map (the osmdroid library, no API key needed).
 // osmdroid is an older Android "View", so AndroidView places it inside Compose.
 @Composable
@@ -152,17 +157,10 @@ fun ShopMap(
         update = { map ->
             map.overlays.clear()
 
-            // The user's position, with a different icon from the shops.
+            // Move the map to the user's position (only the first time).
             userLocation?.let { (lat, lon) ->
-                val me = GeoPoint(lat, lon)
-                map.overlays.add(Marker(map).apply {
-                    position = me
-                    title = "Search centre"
-                    icon = ContextCompat.getDrawable(map.context, android.R.drawable.ic_dialog_map)
-                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
-                })
                 if (!centred[0]) {
-                    map.controller.setCenter(me)
+                    map.controller.setCenter(GeoPoint(lat, lon))
                     centred[0] = true
                 }
             }
@@ -173,6 +171,7 @@ fun ShopMap(
                     position = GeoPoint(shop.latitude, shop.longitude)
                     title = shop.name
                     snippet = OpeningHours.statusNow(shop.openingHours).label
+                    icon = ContextCompat.getDrawable(map.context, R.drawable.ic_shop_pin)   // purple pin with a hanger
                     setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                 })
             }
