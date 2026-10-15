@@ -70,7 +70,7 @@ object OpeningHours {
     }
 
     // "Mo-Fr" -> [Mo, Tu, We, Th, Fr]   "Sa,Su" -> [Sa, Su]   "Sa-Mo" -> [Sa, Su, Mo]
-    // Can't read it (e.g. "Mon-Fri") -> empty list
+    // Can't read it ("Mon-Fri") -> empty list
     private fun readDays(text: String): List<String> {
         val result = mutableListOf<String>()
         for (piece in text.split(",")) {

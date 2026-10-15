@@ -41,7 +41,7 @@ import au.edu.jcu.assessment.utilityapp.ui.theme.MobileTech_UtilityAppTheme
 import au.edu.jcu.assessment.utilityapp.viewmodel.SettingsViewModel
 import au.edu.jcu.assessment.utilityapp.viewmodel.ShopUiState
 import au.edu.jcu.assessment.utilityapp.viewmodel.ShopViewModel
-// THE UTILITY TAB: op shops near the user as a list
+// THE UTILITY TAB: op shops near the user as a list.
 @Composable
 fun UtilityScreen(onAskPermission: () -> Unit) {
     val view = shopResultView(onAskPermission)
@@ -56,6 +56,7 @@ fun UtilityScreen(onAskPermission: () -> Unit) {
                 ShopsHeader(title = "Thrift Finder")
             }
         }
+
         when (view) {
             is ResultView.Shops -> {
                 item {
@@ -70,7 +71,7 @@ fun UtilityScreen(onAskPermission: () -> Unit) {
         }
     }
 }
-
+// THE PIECES the screen is built from (the Map tab can use them too: same package)
 // The top of the Utility and Map screens: the title and the user's location.
 @Composable
 fun ShopsHeader(title: String) {
@@ -236,8 +237,7 @@ fun ShopCardPreview() {
         ShopCard(
             shop = Shop(
                 id = "node/1", name = "Example Charity Shop", latitude = 0.0, longitude = 0.0,
-                type = "charity", openingHours = "Mo-Fr 09:00-16:00", address = null,
-                website = null, phone = null, distanceKm = 0.8
+                type = "charity", openingHours = "Mo-Fr 09:00-16:00", distanceKm = 0.8
             ),
             status = OpenStatus.OPEN
         )
