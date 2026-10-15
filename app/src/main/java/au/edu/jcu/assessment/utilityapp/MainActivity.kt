@@ -44,10 +44,10 @@ class MainActivity : ComponentActivity() {
 
         // Map setup: identify the app to the OpenStreetMap tile server (fair-use rule)
         // and keep downloaded map tiles in the app's own cache folder.
-        Configuration.getInstance().apply {
+        Configuration.getInstance().apply{
             userAgentValue = packageName
-            osmdroidBasePath = cacheDir
-            osmdroidTileCache = File(cacheDir, "tiles")
+            osmdroidBasePath = cacheDir // set the folder where the library stores
+            osmdroidTileCache = File(cacheDir, "tiles") // specific folder for download map tiles
         }
 
         enableEdgeToEdge()
