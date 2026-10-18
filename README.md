@@ -43,7 +43,8 @@ It finds **op shops (charity and second-hand shops) near you**, shows how far aw
 app/src/main/java/au/edu/jcu/assessment/utilityapp/
 ├── MainActivity.kt            App start, location permission, bottom tabs
 ├── api/
-│   ├── OverpassApi.kt         Retrofit interface, the Overpass question, the servers
+├   ├── NominatimApi.kt        Backup API if Overpass does not work
+│   ├── OverpassApi.kt         Retrofit interface, the Overpass query, the servers
 │   └── OverpassModels.kt      Shape of the JSON answer
 ├── data/
 │   └── SettingsStore.kt       Saves settings (SharedPreferences)
