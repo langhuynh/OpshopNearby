@@ -10,6 +10,7 @@ import android.os.Build
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import au.edu.jcu.assessment.utilityapp.api.NominatimQuery
 import au.edu.jcu.assessment.utilityapp.api.OverpassQuery
 import au.edu.jcu.assessment.utilityapp.api.OverpassResponse
 import au.edu.jcu.assessment.utilityapp.api.RetrofitInstance
@@ -21,8 +22,10 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -47,28 +50,35 @@ sealed interface ShopUiState {
     data class Error(val message: String) : ShopUiState
 }
 
+// Thrown when both servers failed. Its message lists what each one answered.
+class AllServersFailed(message: String) : Exception(message)
+
 // One ViewModel shared by the Utility and Map tabs, so both show the same shops and location.
 // It keeps everything when the screen rotates or the user switches tabs.
 class ShopViewModel(application: Application) : AndroidViewModel(application) {
 
     private val settingsStore = SettingsStore.get(application)
     private val locationClient = LocationServices.getFusedLocationProviderClient(application)
+
     // MutableStateFlow: a value the screens watch. When it changes, they redraw.
     val state = MutableStateFlow<ShopUiState>(ShopUiState.NeedPermission)
+
     val userLocation = MutableStateFlow<Pair<Double, Double>?>(null)
-    // The place name shown at the top of the screens, e.g. "Brisbane, QLD".
+
+    // The place name shown at the top of the screens, e.g. " QLD".
     val locationLabel = MutableStateFlow<String?>(null)
+
     // The search that is running now. A new search cancels it, so old answers can't pile up
     // or arrive late and replace the newer results.
     private var searchJob: Job? = null
+
     // The last search that worked, so a SMALLER distance can be shown straight away
     // by filtering these shops, without asking the server again.
     private var lastShops: List<Shop> = emptyList()
     private var lastRadiusKm = 0
     private var lastSearchedAt: Pair<Double, Double>? = null
 
-    // The server that answered last time. The next search asks it first,
-    // so the app doesn't keep waiting for a server that is down.
+    // The server that answered last time. The next search asks it first.
     private var lastGoodServer = 0
 
     init {
@@ -114,33 +124,47 @@ class ShopViewModel(application: Application) : AndroidViewModel(application) {
         }
         state.value = ShopUiState.Locating
 
-        // Don't wait for the GPS forever: after 10 seconds, give up and use the last known location.
+        // the location the phone already knows (usually under 1 second).
+        // Only used straight away if it is recent (less than 5 minutes old).
+        locationClient.lastLocation
+            .addOnSuccessListener { last ->
+                if (last != null && System.currentTimeMillis() - last.time < 5 * 60_000) {
+                    onGpsLocation(last.latitude, last.longitude)
+                } else {
+                    useFreshLocation()   // too old or unknown: ask the GPS
+                }
+            }
+            .addOnFailureListener { useFreshLocation() }
+    }
+
+    // ask the GPS for a new location. Gives up after 10 seconds.
+    @SuppressLint("MissingPermission")   // only called from refresh(), after the check
+    private fun useFreshLocation() {
         val cancelGps = CancellationTokenSource()
         val gpsTimeout = viewModelScope.launch {
             delay(10_000)
             cancelGps.cancel()
         }
+        // HIGH_ACCURACY uses the GPS, which also works on the emulator.
         locationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cancelGps.token)
             .addOnCompleteListener { task ->
                 gpsTimeout.cancel()
                 val location = if (task.isSuccessful) task.result else null
                 if (location != null) onGpsLocation(location.latitude, location.longitude)
-                else useLastLocation()
+                else useOldLocation()   // GPS gave nothing: use the last known one, even if it is old
             }
     }
 
-    // No fresh location (common on emulators, or the GPS was too slow), so try the last known one.
-    @SuppressLint("MissingPermission")   // only called from refresh(), after the check
-    private fun useLastLocation() {
+    // the last known location, even if it is old.
+    @SuppressLint("MissingPermission")   // only called from useFreshLocation(), after the check
+    private fun useOldLocation() {
         locationClient.lastLocation
             .addOnSuccessListener { last ->
                 if (last != null) onGpsLocation(last.latitude, last.longitude)
-                else state.value = ShopUiState.Error(
-                    "Couldn't find your location. Turn on location, then tap Try again."
-                )
+                else state.value = ShopUiState.Error("Couldn't find your location. Turn on location, then tap Try again.")
             }
             .addOnFailureListener {
-                state.value = ShopUiState.Error("Couldn't find your location.")
+                state.value = ShopUiState.Error("Couldn't find your location. Turn on location, then tap Try again.")
             }
     }
 
@@ -167,17 +191,22 @@ class ShopViewModel(application: Application) : AndroidViewModel(application) {
                 state.value = ShopUiState.Loading("Still searching… the free map server is busy, so this can take a little longer.")
             }
             val result = try {
-                ShopUiState.Success(ShopMapper.toShops(fetch(apiQuery), lat, lon))
+                val answer = fetchWithBackup(apiQuery, lat, lon, radiusKm)
+                val shops = ShopMapper.toShops(answer, lat, lon)
+                    .filter { (it.distanceKm ?: 0.0) <= radiusKm }   // keep only shops inside the distance
+                ShopUiState.Success(shops)
             } catch (e: CancellationException) {
                 throw e   // a newer search replaced this one: stop quietly, don't show an error
             } catch (e: UnknownHostException) {
                 ShopUiState.Error("No internet connection. Check your connection and try again.")
+            } catch (e: AllServersFailed) {
+                ShopUiState.Error("The free map servers are busy right now. Try again in a minute.")
             } catch (e: SocketTimeoutException) {
                 ShopUiState.Error("The map server took too long to answer. Try again in a minute.")
             } catch (e: HttpException) {
                 // 429 = too many requests, 5xx (500, 502, 503, 504) = the server has a problem
                 if (e.code() == 429 || e.code() >= 500) {
-                    ShopUiState.Error("The free map servers are busy right now. Try again in a minute.")
+                    ShopUiState.Error("The free map servers are busy right now (error ${e.code()}). Try again in a minute.")
                 } else {
                     ShopUiState.Error("The map server returned an error (${e.code()}). Try again later.")
                 }
@@ -191,30 +220,83 @@ class ShopViewModel(application: Application) : AndroidViewModel(application) {
                 lastRadiusKm = radiusKm
                 lastSearchedAt = lat to lon
             }
-            state.value = result
+            state.value = result   // the new shops, or the error message
         }
     }
 
-    // Tries each free server in turn (see RetrofitInstance.servers) until one answers,
-    // starting with the one that worked last time. If they all fail, the last error is shown.
-    private suspend fun fetch(query: String): OverpassResponse {
+    // 1. Ask the 2 Overpass servers (best results).
+    // 2. If both fail, ask the BACKUP: Nominatim (OpenStreetMap's search service).
+    // 3. If the backup also finds nothing, show the Overpass error.
+    private suspend fun fetchWithBackup(query: String, lat: Double, lon: Double, radiusKm: Int): OverpassResponse =
+        try {
+            fetch(query)                 // the 2 Overpass servers
+        } catch (e: CancellationException) {
+            throw e                      // a newer search replaced this one
+        } catch (e: UnknownHostException) {
+            throw e                      // no internet: the backup won't work either
+        } catch (e: Exception) {
+            state.value = ShopUiState.Loading("The main map servers are busy… trying the backup.")
+            val backup = askNominatim(lat, lon, radiusKm)
+            if (backup.elements.isNullOrEmpty()) throw e   // backup found nothing: show the first error
+            backup
+        }
+
+    // The backup: 2 searches, "charity shop" and "second hand shop", around the user.
+    // Nominatim allows at most 1 request per second, so it waits a little between them.
+    private suspend fun askNominatim(lat: Double, lon: Double, radiusKm: Int): OverpassResponse {
+        val box = NominatimQuery.boxAround(lat, lon, radiusKm)
+        val places = try {
+            val charity = RetrofitInstance.nominatim.search("charity shop", box)
+            delay(1_100)
+            val secondHand = RetrofitInstance.nominatim.search("second hand shop", box)
+            charity + secondHand
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            emptyList()                  // the backup failed too
+        }
+        return NominatimQuery.toOverpassResponse(places)
+    }
+
+    // Asks the 2 Overpass servers (see RetrofitInstance.servers) and uses the FIRST answer that arrives:
+    //   server A: now      server B: after 4 s (only if A hasn't answered yet)
+    // As soon as one answers, the other is stopped. If both fail, the error lists what each one said.
+    private suspend fun fetch(query: String): OverpassResponse = coroutineScope {
         val servers = RetrofitInstance.servers
-        var lastError: Exception? = null
-        for (i in servers.indices) {
-            val index = (lastGoodServer + i) % servers.size   // e.g. start at 1: try 1, 2, then 0
-            try {
-                val answer = servers[index].search(query)
-                lastGoodServer = index     // next time, ask this server first
-                return answer
-            } catch (e: CancellationException) {
-                throw e                    // a newer search replaced this one
-            } catch (e: UnknownHostException) {
-                throw e                    // no internet: the other servers won't work either
-            } catch (e: Exception) {
-                lastError = e              // this server is busy or broken: try the next one
+        val firstAnswer = CompletableDeferred<OverpassResponse>()   // a box that gets the first answer
+        val problems = mutableListOf<String>()   // what each server answered, e.g. "overpass-api.de: error 500"
+
+        val jobs = servers.indices.map { i ->
+            val index = (lastGoodServer + i) % servers.size   // start with the server that worked last time
+            launch {
+                delay(i * 4_000L)                    // 0 s, 4 s
+                if (firstAnswer.isCompleted) return@launch   // someone already answered: don't ask
+                try {
+                    val answer = servers[index].search(query)
+                    if (firstAnswer.complete(answer)) lastGoodServer = index   // the winner
+                } catch (e: CancellationException) {
+                    throw e                          // stopped because the other server won
+                } catch (e: UnknownHostException) {
+                    firstAnswer.completeExceptionally(e)   // no internet: the other won't work either
+                } catch (e: Exception) {
+                    // This server is busy or broken: write down what it said.
+                    val name = RetrofitInstance.urls[index].removePrefix("https://").substringBefore("/")
+                    val reason = when (e) {
+                        is HttpException -> "error ${e.code()}"
+                        is SocketTimeoutException -> "too slow"
+                        else -> e.javaClass.simpleName
+                    }
+                    problems.add("$name: $reason")
+                    if (problems.size == servers.size) {   // both failed
+                        firstAnswer.completeExceptionally(AllServersFailed(problems.joinToString("\n")))
+                    }
+                }
             }
         }
-        throw lastError ?: Exception("No map server answered")
+
+        val answer = firstAnswer.await()   // wait for the first answer (or the error if both failed)
+        jobs.forEach { it.cancel() }       // stop the slower server
+        answer
     }
 
     // Asks Android's built-in Geocoder (free, no key) for the suburb name. Returns null if it can't.

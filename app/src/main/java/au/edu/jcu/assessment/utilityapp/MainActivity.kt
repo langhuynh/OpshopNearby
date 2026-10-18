@@ -1,6 +1,5 @@
 package au.edu.jcu.assessment.utilityapp
 
-//import au.edu.jcu.assessment.utilityapp.screen.MapScreen
 import android.Manifest
 import android.os.Bundle
 import androidx.activity.ComponentActivity

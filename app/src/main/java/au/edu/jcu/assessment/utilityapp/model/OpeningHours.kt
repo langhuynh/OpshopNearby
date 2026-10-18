@@ -11,7 +11,7 @@ enum class OpenStatus(val label: String) {
 
 // Reads opening hours like "Mo-Fr 09:00-17:00; Sa,Su 09:00-12:00; PH off"
 // and says if the shop is open right now.
-// If it can't read the text, it says UNKNOWN instead of guessing.
+// If it can't read the text, it says UNKNOWN.
 object OpeningHours {
 
     private val DAYS = listOf("Mo", "Tu", "We", "Th", "Fr", "Sa", "Su")

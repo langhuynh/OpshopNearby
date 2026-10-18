@@ -37,14 +37,9 @@ import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
-
-// =====================================================================================
 // THE MAP TAB: the same shops as the Utility tab, as pins on an OpenStreetMap map.
 // It uses the shared pieces in utility_screen.kt (ShopsHeader, shopResultView, OsmCredit...).
-// =====================================================================================
 // The Map tab: the same shops as the Utility tab, as pins on an OpenStreetMap map.
-// Upright: header on top, map below. Sideways: header on the left (scrollable), map on the right,
-// so the map always gets enough space.
 @Composable
 fun MapScreen(onAskPermission: () -> Unit) {
     val view = shopResultView(onAskPermission)
@@ -107,11 +102,7 @@ private fun MapArea(view: ResultView, modifier: Modifier) {
     }
 }
 
-
-// =====================================================================================
 // THE MAP ITSELF (osmdroid, free OpenStreetMap tiles, no API key)
-// =====================================================================================
-// A free OpenStreetMap map (the osmdroid library, no API key needed).
 // osmdroid is an older Android "View", so AndroidView places it inside Compose.
 @Composable
 fun ShopMap(
@@ -131,8 +122,7 @@ fun ShopMap(
     }
 
     // Remembers whether the map has already moved to the user,
-    // so it doesn't jump back every time the list changes (for example after Refresh).
-    val centred = remember { booleanArrayOf(false) }
+   val centred = remember { booleanArrayOf(false) }
 
     // osmdroid needs to know when the screen pauses and resumes.
     DisposableEffect(lifecycle) {

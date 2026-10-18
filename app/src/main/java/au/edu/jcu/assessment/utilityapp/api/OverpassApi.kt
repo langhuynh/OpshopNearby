@@ -3,37 +3,45 @@ package au.edu.jcu.assessment.utilityapp.api
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.GET
-import retrofit2.http.Query
+import retrofit2.http.Field
+import retrofit2.http.FormUrlEncoded
+import retrofit2.http.POST
 import java.util.concurrent.TimeUnit
 
+// OverpassApi: POST https://overpass-api.de/api/interpreter   with the question as "data"
+// The Overpass servers ask apps to send the question with POST (in the body),
+// not in the link, and may block link (GET) requests when they are busy.
+
 interface OverpassApi {
-    @GET("api/interpreter")
+    @FormUrlEncoded                 // send the question like a web form...
+    @POST("api/interpreter")        //to <server>/api/interpreter
     // non-blocking function to perform asynchronous, long-running operations
-    // @Query("data") adds ?data=<query> to the end of the link
-    suspend fun search(@Query("data") query: String): OverpassResponse
+    suspend fun search(@Field("data") query: String): OverpassResponse
 }
 
-// The question that goes after ?data= :
-// "find charity and second-hand shops within radiusMeters of lat, lon, and answer in JSON"
 object OverpassQuery {
     fun opShopsAround(lat: Double, lon: Double, radiusMeters: Int): String =
         "[out:json][timeout:25];" +
                 "nwr[\"shop\"~\"^(charity|second_hand)$\"](around:$radiusMeters,$lat,$lon);" +
                 "out center tags;"
 }
+
+// RetrofitInstance is an object that creates a single, static instance (a singleton)
 object RetrofitInstance {
 
-    // EXTRA 1: OpenStreetMap asks every app to send its name (User-Agent),
-    // and stop waiting for a slow server after 15 seconds.
-    private val client = OkHttpClient.Builder()
+    //OpenStreetMap asks every app to send a clear name (User-Agent),
+      private val client = OkHttpClient.Builder()
         .addInterceptor { chain ->
-            chain.proceed(chain.request().newBuilder().header("User-Agent", "ThriftFinder/1.0").build())
+            val request = chain.request().newBuilder()
+                .header("User-Agent", "ThriftFinder/1.0 (JCU CP3406 student project, Android)")
+                .build()
+            chain.proceed(request)
         }
         .connectTimeout(5, TimeUnit.SECONDS)
-        .readTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(25, TimeUnit.SECONDS)
         .build()
 
+    // Exactly like the template's "val api", but for any base URL.
     private fun create(baseUrl: String): OverpassApi =
         Retrofit.Builder()
             .baseUrl(baseUrl)
@@ -42,11 +50,25 @@ object RetrofitInstance {
             .build()
             .create(OverpassApi::class.java)
 
-     // ShopViewModel tries them in order until one answers.
+   // ShopViewModel tries them a few seconds apart and uses the first answer.
+    // The addresses of the 2 free servers (also shown in the error message if they all fail).
+    val urls = listOf(
+        "https://overpass-api.de/",
+        "https://overpass.private.coffee/"
+    )
+
+    // One OverpassApi for each address.
     val servers: List<OverpassApi> by lazy { // defers the initialization of the variable until it is first accessed.
-        listOf(
-            create("https://overpass-api.de/"),
-            create("https://maps.mail.ru/osm/tools/overpass/")
-        )
+        urls.map { url -> create(url) }
+    }
+
+    // The BACKUP: Nominatim (see NominatimApi.kt). Same app name (User-Agent) as above.
+    val nominatim: NominatimApi by lazy {
+        Retrofit.Builder()
+            .baseUrl("https://nominatim.openstreetmap.org/")
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(NominatimApi::class.java)
     }
 }

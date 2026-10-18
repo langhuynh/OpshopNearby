@@ -52,7 +52,6 @@ fun SettingsScreen() {
 }
 
 // The layout only (no ViewModel inside), so the Previews can show it with fake settings.
-//   Upright (portrait):    everything in one column.
 //   Sideways (landscape):  2 columns: settings on the left, Reset + credit on the right.
 @Composable
 fun SettingsContent(
@@ -109,8 +108,6 @@ fun SettingsContent(
         }
     }
 }
-// The 4 pieces. Each one is written once and used by both layouts.
-
 // 1. Search distance: one chip for each option (2, 5, 10, 20 km)
 @Composable
 private fun DistanceSetting(settings: AppSettings, onRadius: (Int) -> Unit) {
@@ -158,8 +155,6 @@ private fun ResetAndCredit(onReset: () -> Unit) {
 }
 
 // 4. A picture of an op shop (res/drawable/thrift_shop.png).
-//    The picture and its text sit in the MIDDLE of the free space at the bottom,
-//    so the space above and below them is the same. On small screens the picture shrinks.
 @Composable
 private fun ShopPicture(modifier: Modifier) {
     Column(
